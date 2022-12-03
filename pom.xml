@@ -22,42 +22,10 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <executions>
-                        <!-- binding a plugin goal to an non-existent phase will
-                             disable the execution of the plugin goal -->
-                        <execution>
-                            <id>default-resources</id>
-                            <phase>none</phase>
-                        </execution>
-                        <execution>
-                            <id>default-testResources</id>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
                     <!-- https://github.com/apache/maven-compiler-plugin/releases -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.10.1</version>
-                    <executions>
-                        <execution>
-                            <id>default-testCompile</id>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>default-test</id>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
                 </plugin>
                 <plugin>
                     <!-- https://github.com/apache/maven-jar-plugin/releases -->
@@ -77,4 +45,52 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <profile>
+            <id>fast</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-resources-plugin</artifactId>
+                            <executions>
+                                <!-- binding a plugin goal to an non-existent phase will
+                                        disable the execution of the plugin goal -->
+                                <execution>
+                                    <id>default-resources</id>
+                                    <phase>none</phase>
+                                </execution>
+                                <execution>
+                                    <id>default-testResources</id>
+                                    <phase>none</phase>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-compiler-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>default-testCompile</id>
+                                    <phase>none</phase>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>default-test</id>
+                                    <phase>none</phase>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 </project>
