@@ -2,7 +2,7 @@
 
 ## 1. Starting with a minimal POM
 
-The POM is written in a XML file. Its content and structure are described by the Maven XSD (XML Schema Definition). Since Maven 2, the version 4 of the Maven XSD is used, it is available here: https://maven.apache.org/xsd/maven-4.0.0.xsd.
+The POM is written in an XML file. Its content and structure are described by the Maven XSD (XML Schema Definition). Since Maven 2, the version 4 of the Maven XSD is used, it is available here: https://maven.apache.org/xsd/maven-4.0.0.xsd.
 
 Therefore, the pom.xml should start this way:
 
@@ -12,7 +12,7 @@ Therefore, the pom.xml should start this way:
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 </project>
 ```
-The XML prolog has been added for good measure but it is optional in XML 1.0. For more information on the attributes of the project tag, check https://stackoverflow.com/q/34202967.
+The XML prolog has been added for good measure but it is optional in XML 1.0. For more information on the attributes of the project tag, read: https://stackoverflow.com/q/34202967.
 
 The above XML is technically valid, however, in order to run any Maven command, the following tags are required: `modelVersion`, `groupId`, `artifactId`, `version`.
 
@@ -31,9 +31,9 @@ The above XML is technically valid, however, in order to run any Maven command, 
 
 ## 2. Setting the Java version
 
-Running `mvn install` will fail with the error message: _Source option 5 is no longer supported. Use 7 or later._ The reason is that with Maven 3.8.6, the version 3.1 of maven-compiler-plugin is used, and the plugin has a default value for its `source` and `target` flags set to 1.5 until its version 3.8.0 (exclusive). This can be verified here: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#source.
+Running `mvn install` will fail with the error message: _Source option 5 is no longer supported. Use 7 or later._ The reason is that with Maven 3.8.6, the version 3.1 of maven-compiler-plugin is used, and the plugin has a default value for its `source` and `target` flags set to 1.5 until its version 3.8.0 (exclusive), as explained here: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#source.
 
-To fix the error, we should specify the Java version used in the project. This can be done by specifying the Java version in the `source` and `target` flags of the compiler plugin (or by specifying only the `release` flag, for Java 9+). The flags can be specified in the plugin configuration or with a user property (e.g. `maven.compiler.release`).
+To fix this error, we should specify the Java version used in the project. This can be done by specifying the Java version in the `source` and `target` flags of the compiler plugin (or by specifying only the `release` flag, for Java 9+). The flags can be specified in the plugin configuration or with a user property (e.g. `maven.compiler.release`).
 
 See: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#release
 
@@ -68,15 +68,13 @@ Updating the compiler plugin is also an option, but specifying the Java version 
 </project>
 ```
 
-By adding the plugin in build.pluginManagement and not in build.plugins, we show that the binding is already done by default by Maven.
+By adding the plugin only in `build.pluginManagement` and leaving `build.plugins` empty, we show that the binding is already done by default by Maven (_convention over configuration_).
 
-Indeed, adding a plugin in build.pluginManagement does not bind any of its goals to a lifecycle phase. For the binding to be done, the plugin must be explicitly added to the `build.plugins` section. As shown, this is not needed for this plugin and a few others.
-
-See: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war
+Indeed, adding a plugin in `build.pluginManagement` does not bind any of its goals to a lifecycle phase. For the binding to be done, the plugin must explicitly be added to `build.plugins`. As shown, this is not needed for this plugin and a few others, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war
 
 ## 3. Specifying the default encoding
 
-As each platform can have its own encoding defined, we should tell Maven which encoding it should use, so as not to make the build platform dependent, as mentioned in the following warning:
+As each platform can have its own default encoding, we should tell Maven which encoding it should use, so as not to make the build platform dependent, as mentioned in the following warning:
 
 ```
 [INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ maven-basics ---
@@ -92,7 +90,7 @@ To fix that, we can specify a value for the `encoding` user property:
 </properties>
 ```
 
-However, we usually set a value for the `project.build.sourceEncoding` property which is the default for the `encoding` flag of both the compiler plugin and the resources plugin, and surely other plugins too.
+However, we usually set a value for the `project.build.sourceEncoding` property instead, which is the default value of the  `encoding` flag of both the compiler plugin and the resources plugin, and surely other plugins too, see: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#encoding
 
 ```xml
 <properties>
@@ -100,8 +98,6 @@ However, we usually set a value for the `project.build.sourceEncoding` property 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 </properties>
 ```
-
-See: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#encoding
 
 ## 4. Making the JAR executable
 
@@ -130,7 +126,7 @@ Documentation: https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
 
 In this branch, our project has only one Java class, no resources and no tests. This means that the `process-resources`, `process-test-resources`, `test-compile` and `test` phases of the default lifecycle are not needed.
 
-By default, Maven binds a plugin goal to each of the phase mentioned above, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war. To prevent the goal from running, we can bind it to an nonexistent phase:
+By default, Maven binds a plugin goal to each of the phases mentioned above, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war. To prevent the goal from executing, we can bind it to an nonexistent phase:
 
 ```xml
 <project>
@@ -216,7 +212,7 @@ Going a bit further, we can keep the default build intact, i.e. not unbinding an
 </profiles>
 ```
 
-This profle is invoked with the following command:
+The profle can be invoked with the following command:
 
 ```sh
 mvn install -Pfast
@@ -224,11 +220,10 @@ mvn install -Pfast
 
 ## 7. Using plugins directly
 
-Maven is all about plugins. To demonstrate this, we can make a change in the source code and then call the maven-compiler-plugin and maven-jar-plugin directly, and see that the code change will have been taken into account:
+Maven is all about plugins. To demonstrate this, we can make a change in the source code and then call the maven-compiler-plugin and maven-jar-plugin directly, and see that the code change will be reflected when executing the JAR:
 
 ```sh
 mvn compiler:compile
 mvn jar:jar
 java -jar target/maven-basics-1.0.0-SNAPSHOT.jar
 ```
-
