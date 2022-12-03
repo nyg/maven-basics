@@ -31,13 +31,13 @@ The above XML is technically valid, however, in order to run any Maven command, 
 
 ## 2. Setting the Java version
 
-Running `mvn install` will fail with the error message: _Source option 5 is no longer supported. Use 7 or later._ The reason is that with Maven 3.8.6, the version 3.1 of maven-compiler-plugin is used, and the plugin has a default value for its `source` and `target` flags set to 1.5 until its version 3.8.0 (exclusive). This can be verified here: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html.
+Running `mvn install` will fail with the error message: _Source option 5 is no longer supported. Use 7 or later._ The reason is that with Maven 3.8.6, the version 3.1 of maven-compiler-plugin is used, and the plugin has a default value for its `source` and `target` flags set to 1.5 until its version 3.8.0 (exclusive). This can be verified here: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#source.
 
-To fix the error, we should specify the Java version used in the project. This can be done by specifying the Java version in the `source` and `target` flags of the compiler plugin (or by specifying only the `release` flag, for Java 9+).
+To fix the error, we should specify the Java version used in the project. This can be done by specifying the Java version in the `source` and `target` flags of the compiler plugin (or by specifying only the `release` flag, for Java 9+). The flags can be specified in the plugin configuration or with a user property (e.g. `maven.compiler.release`).
 
-The flags can be specified in the plugin configuration or with a user property (e.g. `maven.compiler.release`).
+See: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#release
 
-Updating the compiler plugin is also an option, but specifying the Java version to be used in a project is a good practice.
+Updating the compiler plugin is also an option, but specifying the Java version to be used in a project is a good practice. Here we do both:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -68,9 +68,11 @@ Updating the compiler plugin is also an option, but specifying the Java version 
 </project>
 ```
 
-See: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#release
+By adding the plugin in build.pluginManagement and not in build.plugins, we show that the binding is already done by default by Maven.
 
-TODO pluginManagement vs plugins multi module projects
+Indeed, adding a plugin in build.pluginManagement does not bind any of its goals to a lifecycle phase. For the binding to be done, the plugin must be explicitly added to the `build.plugins` section. As shown, this is not needed for this plugin and a few others.
+
+See: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war
 
 ## 3. Specifying the default encoding
 
@@ -101,11 +103,34 @@ However, we usually set a value for the `project.build.sourceEncoding` property 
 
 See: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#encoding
 
-## 4. Unbinding unused lifecycle phases
+## 4. Making the JAR executable
+
+If we want to make the generated JAR executable, such as it can be invoked with `java -jar maven-basics-1.0.0.jar`, we need the `Main-Class` attribute to be defined in the MANIFEST.MF file of the JAR. As its name implies, this attribute lets the JAR know which class of our application it should execute.
+
+The value can be configured through the maven-jar-plugin, which `jar` goal is bound to the `package` phase of the default lifecycle:
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-jar-plugin</artifactId>
+    <version>3.3.0</version>
+    <configuration>
+        <archive>
+            <manifest>
+                <mainClass>edu.self.nyg.maven.basics.Main</mainClass>
+            </manifest>
+        </archive>
+    </configuration>
+</plugin>
+```
+
+Documentation: https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
+
+## 5. Unbinding unused lifecycle phases
 
 In this branch, our project has only one Java class, no resources and no tests. This means that the `process-resources`, `process-test-resources`, `test-compile` and `test` phases of the default lifecycle are not needed.
 
-By default, a different plugin goal is bound to each of the phase mentioned, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war. To prevent the goal from running, we can bind it to an nonexistent phase:
+By default, Maven binds a plugin goal to each of the phase mentioned above, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war. To prevent the goal from running, we can bind it to an nonexistent phase:
 
 ```xml
 <project>
@@ -139,27 +164,71 @@ To find the id of the execution that binds a plugin goal to a lifecycle phase, w
 mvn help:effective-pom -Dverbose | grep -B1 process-test-resources
 ```
 
-## 5. Making the JAR executable
+## 6. Creating profiles
 
-If we want to make the generated JAR executable, such as it can be invoked with `java -jar maven-basics-1.0.0.jar`, we need the `Main-Class` attribute to be defined in the MANIFEST.MF file of the JAR. As its name implies, Main-Class lets the JAR know which class of our application it should execute.
-
-The value can be configured through the maven-jar-plugin, which `jar` goal is bound to the `package` phase of the default lifecycle:
+Going a bit further, we can keep the default build intact, i.e. not unbinding any plugin goals from lifecycle phases, and instead add a custom build profile that will contain the unbindings done previously:
 
 ```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-jar-plugin</artifactId>
-    <version>3.3.0</version>
-    <configuration>
-        <archive>
-            <manifest>
-                <mainClass>edu.self.nyg.maven.basics.Main</mainClass>
-            </manifest>
-        </archive>
-    </configuration>
-</plugin>
+<profiles>
+    <profile>
+        <id>fast</id>
+        <build>
+            <pluginManagement>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-resources</id>
+                                <phase>none</phase>
+                            </execution>
+                            <execution>
+                                <id>default-testResources</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-testCompile</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </pluginManagement>
+        </build>
+    </profile>
+</profiles>
 ```
 
-Documentation: https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
+This profle is invoked with the following command:
 
-## 6. Creating profiles
+```sh
+mvn install -Pfast
+```
+
+## 7. Using plugins directly
+
+Maven is all about plugins. To demonstrate this, we can make a change in the source code and then call the maven-compiler-plugin and maven-jar-plugin directly, and see that the code change will have been taken into account:
+
+```sh
+mvn compiler:compile
+mvn jar:jar
+java -jar target/maven-basics-1.0.0-SNAPSHOT.jar
+```
+
