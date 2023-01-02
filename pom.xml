@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -9,32 +10,103 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <!-- Specify the source encoding, used by multiple plugins -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!-- User property for the maven-compiler-plugin, defines the Java
-             version to use. It can also be put directly in the plugin
-             configuration -->
         <maven.compiler.release>17</maven.compiler.release>
+
+        <!-- Third-party libraries -->
+        <lombok.version>1.18.24</lombok.version>
+        <slf4j.version>2.0.6</slf4j.version>
+
+        <!-- Tests -->
+        <junit.version>5.9.1</junit.version>
+        <assertj.version>3.23.1</assertj.version>
+
+        <!-- Plugin -->
+        <compiler.plugin.version>3.10.1</compiler.plugin.version>
+        <surefire.plugin.version>3.0.0-M7</surefire.plugin.version>
+        <jar.plugin.version>3.3.0</jar.plugin.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Third-party libraries -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <!-- Tests -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Third-party libraries -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+        </dependency>
+
+        <!-- Tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+        </dependency>
+    </dependencies>
 
     <build>
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <!-- https://github.com/apache/maven-compiler-plugin/releases -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
+                    <version>${compiler.plugin.version}</version>
                 </plugin>
                 <plugin>
-                    <!-- https://github.com/apache/maven-jar-plugin/releases -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${surefire.plugin.version}</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>${jar.plugin.version}</version>
                     <configuration>
-                        <!-- needed to make the jar executable with:
-                             java -jar target/*.jar -->
                         <archive>
                             <manifest>
                                 <mainClass>edu.self.nyg.maven.basics.Main</mainClass>
@@ -45,52 +117,4 @@
             </plugins>
         </pluginManagement>
     </build>
-
-    <profiles>
-        <profile>
-            <id>fast</id>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-resources-plugin</artifactId>
-                            <executions>
-                                <!-- binding a plugin goal to an non-existent phase will
-                                        disable the execution of the plugin goal -->
-                                <execution>
-                                    <id>default-resources</id>
-                                    <phase>none</phase>
-                                </execution>
-                                <execution>
-                                    <id>default-testResources</id>
-                                    <phase>none</phase>
-                                </execution>
-                            </executions>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-compiler-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>default-testCompile</id>
-                                    <phase>none</phase>
-                                </execution>
-                            </executions>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>default-test</id>
-                                    <phase>none</phase>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
-        </profile>
-    </profiles>
 </project>
