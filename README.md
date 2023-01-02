@@ -1,229 +1,149 @@
 # maven-basics
 
-## 1. Starting with a minimal POM
+report for surefire and report for dependencies
 
-The POM is written in an XML file. Its content and structure are described by the Maven XSD (XML Schema Definition). Since Maven 2, the version 4 of the Maven XSD is used, it is available here: https://maven.apache.org/xsd/maven-4.0.0.xsd.
+## 1. Transaction domain object
 
-Therefore, the pom.xml should start this way:
+The `Transaction` domain object was created in order to help create a meaningful unit test. It only has a quantity and a status, as well as three methods that return a new transaction with an updated status.
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-</project>
-```
-The XML prolog has been added for good measure but it is optional in XML 1.0. For more information on the attributes of the project tag, read: https://stackoverflow.com/q/34202967.
+The `App` class provides three public methods to create, validate and execute a transaction. It is these methods that will be tested with unit tests, not the domain object directly. This class acts as a simple client of the `Transaction` domain object.
 
-The above XML is technically valid, however, in order to run any Maven command, the following tags are required: `modelVersion`, `groupId`, `artifactId`, `version`.
+## 2. Unit tests
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+### JUnit & Assertj
 
-    <modelVersion>4.0.0</modelVersion>
+The unit test is written in the `AppTest` class in `src/test/java` folder. It uses the JUnit framework as well as the Assertj library (optional).
 
-    <groupId>edu.self.nyg</groupId>
-    <artifactId>maven-basics</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-</project>
-```
+Documentation:
 
-## 2. Setting the Java version
+* https://junit.org/junit5/docs/current/user-guide/
+* https://assertj.github.io/doc/
 
-Running `mvn install` will fail with the error message: _Source option 5 is no longer supported. Use 7 or later._ The reason is that with Maven 3.8.6, the version 3.1 of maven-compiler-plugin is used, and the plugin has a default value for its `source` and `target` flags set to 1.5 until its version 3.8.0 (exclusive), as explained here: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#source.
+The JUnit and Assertj dependencies are added with the `test` scope in `dependencyManagement` and then used in `dependencies`. The test scope indicates that the dependencies will only be available during the test compilation and test execution phases.
 
-To fix this error, we should specify the Java version used in the project. This can be done by specifying the Java version in the `source` and `target` flags of the compiler plugin (or by specifying only the `release` flag, for Java 9+). The flags can be specified in the plugin configuration or with a user property (e.g. `maven.compiler.release`).
+### maven-surefire-plugin
 
-See: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#release
-
-Updating the compiler plugin is also an option, but specifying the Java version to be used in a project is a good practice. Here we do both:
+In order for the JUnit v5 tests to be detected, the maven-surefire-plugin needs to be upddated as the version 2.12.4 does not support JUnit 5. The version is added `pluginManagement` section.
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>edu.self.nyg</groupId>
-    <artifactId>maven-basics</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-
-    <properties>
-        <maven.compiler.release>17</maven.compiler.release>
-    </properties>
-
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
-</project>
+<build>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M7</version>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+</build>
 ```
 
-By adding the plugin only in `build.pluginManagement` and leaving `build.plugins` empty, we show that the binding is already done by default by Maven (_convention over configuration_).
+Documentation:
 
-Indeed, adding a plugin in `build.pluginManagement` does not bind any of its goals to a lifecycle phase. For the binding to be done, the plugin must explicitly be added to `build.plugins`. As shown, this is not needed for this plugin and a few others, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war
+* https://maven.apache.org/surefire/maven-surefire-plugin/index.html
 
-## 3. Specifying the default encoding
+#### Running tests
 
-As each platform can have its own default encoding, we should tell Maven which encoding it should use, so as not to make the build platform dependent, as mentioned in the following warning:
-
-```
-[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ maven-basics ---
-[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
-```
-
-To fix that, we can specify a value for the `encoding` user property:
-
-```xml
-<properties>
-    …
-    <encoding>UTF-8</encoding>
-</properties>
-```
-
-However, we usually set a value for the `project.build.sourceEncoding` property instead, which is the default value of the  `encoding` flag of both the compiler plugin and the resources plugin, and surely other plugins too, see: https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#encoding
-
-```xml
-<properties>
-    …
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-</properties>
-```
-
-## 4. Making the JAR executable
-
-If we want to make the generated JAR executable, such as it can be invoked with `java -jar maven-basics-1.0.0.jar`, we need the `Main-Class` attribute to be defined in the MANIFEST.MF file of the JAR. As its name implies, this attribute lets the JAR know which class of our application it should execute.
-
-The value can be configured through the maven-jar-plugin, which `jar` goal is bound to the `package` phase of the default lifecycle:
-
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-jar-plugin</artifactId>
-    <version>3.3.0</version>
-    <configuration>
-        <archive>
-            <manifest>
-                <mainClass>edu.self.nyg.maven.basics.Main</mainClass>
-            </manifest>
-        </archive>
-    </configuration>
-</plugin>
-```
-
-Documentation: https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
-
-## 5. Unbinding unused lifecycle phases
-
-In this branch, our project has only one Java class, no resources and no tests. This means that the `process-resources`, `process-test-resources`, `test-compile` and `test` phases of the default lifecycle are not needed.
-
-By default, Maven binds a plugin goal to each of the phases mentioned above, see: https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#default-lifecycle-bindings-packaging-ejb-ejb3-jar-par-rar-war. To prevent the goal from executing, we can bind it to an nonexistent phase:
-
-```xml
-<project>
-    …
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>default-resources</id>
-                            <phase>none</phase> <!-- this phase doesn't exist -->
-                        </execution>
-                        <execution>
-                            <id>default-testResources</id>
-                            <phase>none</phase>
-                        </execution>
-                    </executions>
-                </plugin>
-            <plugins>
-        <pluginManagement>
-    <build>
-<project>
-```
-
-To find the id of the execution that binds a plugin goal to a lifecycle phase, we can generate the effective POM using the maven-help-plugin:
-
-```
-mvn help:effective-pom -Dverbose | grep -B1 process-test-resources
-```
-
-## 6. Creating profiles
-
-Going a bit further, we can keep the default build intact, i.e. not unbinding any plugin goals from lifecycle phases, and instead add a custom build profile that will contain the unbindings done previously:
-
-```xml
-<profiles>
-    <profile>
-        <id>fast</id>
-        <build>
-            <pluginManagement>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>default-resources</id>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <id>default-testResources</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>default-testCompile</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>default-test</id>
-                                <phase>none</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </pluginManagement>
-        </build>
-    </profile>
-</profiles>
-```
-
-The profle can be invoked with the following command:
+Tests can be run with the following commands:
 
 ```sh
-mvn install -Pfast
+mvn test
+mvn surefire:test
+mvn surefire:test -Dtest=edu.self.nyg.maven.basics.AppTest#testCreateTransaction
+
+# for help on available options
+mvn surefire:help -Ddetail=true -Dgoal=test
 ```
 
-## 7. Using plugins directly
+## 3. Third-party dependencies
 
-Maven is all about plugins. To demonstrate this, we can make a change in the source code and then call the maven-compiler-plugin and maven-jar-plugin directly, and see that the code change will be reflected when executing the JAR:
+### SLF4J
+
+* https://www.slf4j.org/manual.html
+
+SLF4J is a facade for logging frameworks, it provides an API and the actual logging framework can be provided at runtime. Here, we use the java.util.logging (JUL) logger.
+
+```xml
+<!-- SLF4J API -->
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-api</artifactId>
+    <version>2.0.6</version>
+</dependency>
+<!-- Logging provider: java.util.logging, JDK 1.4+ -->
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-jdk14</artifactId>
+    <version>2.0.6</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+In order to use the logger in a class, we use the Lombok `@Slf4j` annotation which generates the following code:
+
+```java
+private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(App.class);
+```
+
+### Lombok
+
+* https://projectlombok.org/
+
+Lombok is library that avoids having to writter getter, setters, constructors, etc. by generating them a compile time. For this reason, the dependency has scope `provided` (it is actually not provided anywhere, but as it is not used at runtime, it will not cause any issue).
+
+```xml
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <version>1.18.24</version>
+    <scope>provided</scope>
+</dependency>
+```
+
+## 4. Dependecy analysis
 
 ```sh
-mvn compiler:compile
-mvn jar:jar
-java -jar target/maven-basics-1.0.0-SNAPSHOT.jar
+$ mvn org.apache.maven.plugins:maven-dependency-plugin:3.4.0:tree -Dverbose
+edu.self.nyg:maven-basics:jar:1.0.0-SNAPSHOT
++- org.projectlombok:lombok:jar:1.18.24:provided
++- org.slf4j:slf4j-api:jar:2.0.6:compile
++- org.slf4j:slf4j-jdk14:jar:2.0.6:runtime
+|  \- (org.slf4j:slf4j-api:jar:2.0.6:runtime - version managed from 2.0.6; omitted for duplicate)
++- org.junit.jupiter:junit-jupiter:jar:5.9.1:test
+|  +- org.junit.jupiter:junit-jupiter-api:jar:5.9.1:test
+|  |  +- org.opentest4j:opentest4j:jar:1.2.0:test
+|  |  +- org.junit.platform:junit-platform-commons:jar:1.9.1:test
+|  |  |  \- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+|  |  \- org.apiguardian:apiguardian-api:jar:1.1.2:test
+|  +- org.junit.jupiter:junit-jupiter-params:jar:5.9.1:test
+|  |  +- (org.junit.jupiter:junit-jupiter-api:jar:5.9.1:test - omitted for duplicate)
+|  |  \- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+|  \- org.junit.jupiter:junit-jupiter-engine:jar:5.9.1:test
+|     +- org.junit.platform:junit-platform-engine:jar:1.9.1:test
+|     |  +- (org.opentest4j:opentest4j:jar:1.2.0:test - omitted for duplicate)
+|     |  +- (org.junit.platform:junit-platform-commons:jar:1.9.1:test - omitted for duplicate)
+|     |  \- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+|     +- (org.junit.jupiter:junit-jupiter-api:jar:5.9.1:test - omitted for duplicate)
+|     \- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+\- org.assertj:assertj-core:jar:3.23.1:test
+   \- net.bytebuddy:byte-buddy:jar:1.12.10:test
+```
+
+```sh
+$ mvn org.apache.maven.plugins:maven-dependency-plugin:3.4.0:list                 
+The following files have been resolved:
+   org.projectlombok:lombok:jar:1.18.24:provided -- module lombok
+   org.slf4j:slf4j-api:jar:2.0.6:compile -- module org.slf4j
+   org.slf4j:slf4j-jdk14:jar:2.0.6:runtime -- module org.slf4j.jul
+   org.junit.jupiter:junit-jupiter:jar:5.9.1:test -- module org.junit.jupiter
+   org.junit.jupiter:junit-jupiter-api:jar:5.9.1:test -- module org.junit.jupiter.api
+   org.opentest4j:opentest4j:jar:1.2.0:test -- module org.opentest4j
+   org.junit.platform:junit-platform-commons:jar:1.9.1:test -- module org.junit.platform.commons
+   org.apiguardian:apiguardian-api:jar:1.1.2:test -- module org.apiguardian.api
+   org.junit.jupiter:junit-jupiter-params:jar:5.9.1:test -- module org.junit.jupiter.params
+   org.junit.jupiter:junit-jupiter-engine:jar:5.9.1:test -- module org.junit.jupiter.engine
+   org.junit.platform:junit-platform-engine:jar:1.9.1:test -- module org.junit.platform.engine
+   org.assertj:assertj-core:jar:3.23.1:test -- module org.assertj.core
+   net.bytebuddy:byte-buddy:jar:1.12.10:test -- module net.bytebuddy
 ```

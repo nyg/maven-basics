@@ -16,7 +16,7 @@ public class App {
 
         App app = new App();
 
-        Transaction tx = app.createTransaction();
+        Transaction tx = app.createTransaction("CHF", "0.1");
         log.info("New transaction: {}", tx);
 
         Transaction validatedTx = app.validate(tx);
@@ -26,9 +26,10 @@ public class App {
         log.info("Executed transaction: {}", executedTx);
     }
 
-    public Transaction createTransaction() {
+    public Transaction createTransaction(String currency, String amount) {
         return Transaction.builder()
-                .quantity(new BigDecimal("0.1"))
+                .currency(currency)
+                .amount(new BigDecimal(amount))
                 .build();
     }
 

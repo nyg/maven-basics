@@ -18,11 +18,16 @@ class AppTest {
     @Test
     void testCreateTransaction() {
 
+        // Given
+        String chfCurrency = "CHF";
+        String amount = "0.1";
+
         // When
-        Transaction tx = app.createTransaction();
+        Transaction tx = app.createTransaction(chfCurrency, amount);
 
         // Then
-        assertThat(tx.getQuantity()).isNotNull();
+        assertThat(tx.getCurrency()).isEqualTo(chfCurrency);
+        assertThat(tx.getAmount()).isEqualTo(new BigDecimal(amount));
         assertThat(tx.getStatus()).isEqualTo(TransactionStatus.NEW);
     }
 
@@ -31,7 +36,8 @@ class AppTest {
 
         // Given
         Transaction tx = Transaction.builder()
-                .quantity(new BigDecimal("0.1"))
+                .currency("CHF")
+                .amount(new BigDecimal("0.1"))
                 .build();
 
         // When
@@ -46,7 +52,8 @@ class AppTest {
 
         // Given
         Transaction tx = Transaction.builder()
-                .quantity(new BigDecimal("0.1"))
+                .currency("CHF")
+                .amount(new BigDecimal("0.1"))
                 .status(TransactionStatus.EXECUTED)
                 .build();
 
@@ -62,7 +69,8 @@ class AppTest {
 
         // Given
         Transaction tx = Transaction.builder()
-                .quantity(new BigDecimal("0.1"))
+                .currency("CHF")
+                .amount(new BigDecimal("0.1"))
                 .status(TransactionStatus.VALIDATED)
                 .build();
 

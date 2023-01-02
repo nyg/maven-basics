@@ -12,43 +12,46 @@ import lombok.Value;
 public class Transaction {
 
     @NonNull
-    private final BigDecimal quantity;
+    private final String currency;
+
+    @NonNull
+    private final BigDecimal amount;
 
     @Default
     private final TransactionStatus status = TransactionStatus.NEW;
 
     public Transaction validated() {
 
-        if (status == TransactionStatus.NEW) {
-            return transitSuccess();
+        if (status != TransactionStatus.NEW) {
+            throw new IllegalStateException("Transaction is not NEW");
         }
 
-        throw new IllegalStateException("Transaction is not NEW");
+        return transitSuccess();
     }
 
     public Transaction rejected() {
 
-        if (status == TransactionStatus.NEW) {
-            return transiteFailure();
+        if (status != TransactionStatus.NEW) {
+            throw new IllegalStateException("Transaction is not NEW");
         }
 
-        throw new IllegalStateException("Transaction is not NEW");
+        return transitFailure();
     }
 
     public Transaction executed() {
 
-        if (status == TransactionStatus.VALIDATED) {
-            return transitSuccess();
+        if (status != TransactionStatus.VALIDATED) {
+            throw new IllegalStateException("Transaction is not VALIDATED");
         }
 
-        throw new IllegalStateException("Transaction is not VALIDATED");
+        return transitSuccess();
     }
 
     private Transaction transitSuccess() {
         return toBuilder().status(status.nextSuccess()).build();
     }
 
-    private Transaction transiteFailure() {
+    private Transaction transitFailure() {
         return toBuilder().status(status.nextFailure()).build();
     }
 }
