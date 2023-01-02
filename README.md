@@ -12,16 +12,16 @@ The `App` class provides three public methods to create, validate and execute a 
 
 ### JUnit & Assertj
 
-The unit test is written in the `AppTest` class in `src/test/java` folder. It uses the JUnit framework as well as the Assertj library (optional).
-
-Documentation:
-
 * https://junit.org/junit5/docs/current/user-guide/
 * https://assertj.github.io/doc/
+
+The unit test is written in the `AppTest` class in `src/test/java` folder. It uses the JUnit framework as well as the Assertj library (optional).
 
 The JUnit and Assertj dependencies are added with the `test` scope in `dependencyManagement` and then used in `dependencies`. The test scope indicates that the dependencies will only be available during the test compilation and test execution phases.
 
 ### maven-surefire-plugin
+
+* https://maven.apache.org/surefire/maven-surefire-plugin/index.html
 
 In order for the JUnit v5 tests to be detected, the maven-surefire-plugin needs to be upddated as the version 2.12.4 does not support JUnit 5. The version is added `pluginManagement` section.
 
@@ -38,10 +38,6 @@ In order for the JUnit v5 tests to be detected, the maven-surefire-plugin needs 
     </pluginManagement>
 </build>
 ```
-
-Documentation:
-
-* https://maven.apache.org/surefire/maven-surefire-plugin/index.html
 
 #### Running tests
 
