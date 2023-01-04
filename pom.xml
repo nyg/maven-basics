@@ -1,12 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edu.self.nyg</groupId>
     <artifactId>maven-basics</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+
+    <description>A simple app to play with Maven features.</description>
+    <url>https://git.sr.ht/~nyg/maven-basics</url>
+
+    <scm>
+        <url>https://git.sr.ht/~nyg/maven-basics/tree</url>
+        <connection>scm:git:https://git.sr.ht/~nyg/maven-basics</connection>
+        <developerConnection>scm:git:git@git.sr.ht:~nyg/maven-basics</developerConnection>
+    </scm>
+
+    <contributors>
+        <contributor>
+            <name>nyg</name>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </contributor>
+    </contributors>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+        </license>
+    </licenses>
 
     <properties>
         <!-- Specify the source encoding, used by multiple plugins -->
@@ -16,6 +40,15 @@
              version to use. It can also be put directly in the plugin
              configuration -->
         <maven.compiler.release>17</maven.compiler.release>
+
+        <!-- Plugins -->
+        <compiler.plugin.version>3.10.1</compiler.plugin.version>
+        <jar.plugin.version>3.3.0</jar.plugin.version>
+        <site.plugin.version>4.0.0-M3</site.plugin.version>
+        <reports.plugin.version>3.4.1</reports.plugin.version>
+        <javadoc.plugin.version>3.4.1</javadoc.plugin.version>
+        <buildplan.plugin.version>2.2.0</buildplan.plugin.version>
+        <dependency.plugin.version>3.4.0</dependency.plugin.version>
     </properties>
 
     <build>
@@ -25,13 +58,13 @@
                     <!-- https://github.com/apache/maven-compiler-plugin/releases -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
+                    <version>${compiler.plugin.version}</version>
                 </plugin>
                 <plugin>
                     <!-- https://github.com/apache/maven-jar-plugin/releases -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>${jar.plugin.version}</version>
                     <configuration>
                         <!-- needed to make the jar executable with:
                              java -jar target/*.jar -->
@@ -41,6 +74,33 @@
                             </manifest>
                         </archive>
                     </configuration>
+                </plugin>
+
+                <!-- Site generation plugins -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${site.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>${reports.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${javadoc.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildplan-maven-plugin</artifactId>
+                    <version>${buildplan.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${dependency.plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -56,7 +116,7 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-resources-plugin</artifactId>
                             <executions>
-                                <!-- binding a plugin goal to an non-existent phase will
+                                <!-- binding a plugin goal to a non-existent phase will
                                         disable the execution of the plugin goal -->
                                 <execution>
                                     <id>default-resources</id>
@@ -93,4 +153,21 @@
             </build>
         </profile>
     </profiles>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildplan-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
