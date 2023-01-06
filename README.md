@@ -156,8 +156,11 @@ By default, Maven binds a plugin goal to each of the phases mentioned above, see
 
 To find the id of the execution that binds a plugin goal to a lifecycle phase, we can generate the effective POM using the maven-help-plugin:
 
-```
+```sh
 mvn help:effective-pom -Dverbose | grep -B1 process-test-resources
+
+# or
+mvn buildplan:list -Dbuildplan.showLifecycles
 ```
 
 ## 6. Creating profiles
@@ -230,6 +233,8 @@ java -jar target/maven-basics-1.0.0-SNAPSHOT.jar
 
 ## 8. Generating a website
 
+### Updating dependencies
+
 Until now we have use the clean and default lifecycle. The third one, the site lifecycle, is used to generate a website for the project.
 
 If we try to run `mvn site` to generate the website, which executes the `site` goal of the maven-site-plugin, we get the following error:
@@ -246,7 +251,7 @@ For information on the error, see: [https://stackoverflow.com/a/51099913](https:
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-site-plugin</artifactId>
-    <version>4.0.0-M3</version>
+    <version>4.0.0-M4</version>
 </plugin>
 <plugin>
     <groupId>org.apache.maven.plugins</groupId>
@@ -274,9 +279,13 @@ However, due to the project having no dependencies nor modules, having a sparse 
 [INFO] Generating "Summary" report       --- maven-project-info-reports-plugin:3.4.1:summary
 ```
 
+By add information such as `scm`, `contributors`, `licenses` in the pom.xml, the corresponding reports will be automatically generated.
+
 Documentation for each goal can be found here: https://maven.apache.org/plugins/maven-project-info-reports-plugin/plugin-info.html.
 
-In order to specify which reports should be run, a new section should be added in the pom.xml:
+### Specifying reports to run
+
+In order to decide which reports should be run for a given plugin, said reports should by specified in the reportsSets section:
 
 ```xml
 <reporting>
@@ -296,11 +305,34 @@ In order to specify which reports should be run, a new section should be added i
 <reporting>
 ```
 
-With the above configuration, only the index report will run, generating the index.html page and its parent page project-info.html. If reports is left empty, no HTML page will be rendered.
+With the above configuration, only the `index` report of the maven-project-info-reports-plugin will run, generating the index.html page and its parent page project-info.html. If reports is left empty, no HTML page will be rendered.
+
+Note that both maven-project-info-reports-plugin is included by default in the reporting section, so it is not necessary to include explicitly (unless you want to customize its behavior).
 
 Unfortunately, the documentation for each goal is sparse and it takes a bit of guessing/code reading to understand how to customize the output of each report. For example, the index report takes the project description from the `description` tag of the pom.xml.
 
-Regarding the strings `Last Published: $dateValue` (top-left) and `Copyright © ${currentYear}` (bottom-right), they are missing template properties for the Velocity template of the maven-default-skin. This skin has not been updated since 2019 and might be replaced by the maven-fluido-skin, see: https://issues.apache.org/jira/browse/MSKINS-196. We can specify which skin to use in the site descriptor file (src/site/site.xml):
+### A word about the default skin
+
+If you use maven-site-plugin 4.0.0-M4 or above, the default skin will be maven-fluido-skin instead of maven-default-skin. Any version below that will use the maven-default-skin. This change has been done in https://issues.apache.org/jira/browse/DOXIASITETOOLS-270. The latter not maintained anymore and will be replaced by the former, see: https://issues.apache.org/jira/browse/MSKINS-196.
+
+Small detail: since 4.0.0-M1, maven-site-plugin uses maven-doxia-sitetools 2.0.0-M2+ instead of 1.11.1. Since, maven-doxia-sitetools 2.0.0-M1, the `dateFormat` and `currentDate` values have been removed from the Velocity rendering context (see: https://issues.apache.org/jira/browse/DOXIASITETOOLS-242) causing the maven-default-skin to not be able to render properly the last published date and copyright year. The strings `Last Published: $dateValue` (top-left) and `Copyright © ${currentYear}` (bottom-right) are displayed. This is an issue only with maven-site-plugin 4.0.0-M1 to M3.
+
+Regarding the Velocity rendering context, it is possible to add variables to it (so that they can be used in Velocity templates, i.e. any *.vm file in a skin) by either adding a user property in our project's pom.xml or by adding a custom property in the site descriptor file (see below).
+
+The maven-default-skin does not provide any Velocity template file (e.g. site.vm). Instead, it relies on the default-site.vm template present in the resources of doxia-site-renderer (part of maven-doxia-sitetools). However, this file was removed in 2.0.0-M4, which means that maven-default-skin cannot be used with this version or any above it (i.e. maven-site-plugin 4.0.0-M4+). This is part [DOXIASITETOOLS-270](https://issues.apache.org/jira/browse/DOXIASITETOOLS-270) mentioned above.
+
+For more information on the architecture of the maven-site-plugin, see:
+
+* https://maven.apache.org/plugins/maven-site-plugin/history.html
+
+For more information on available skins, see:
+
+* https://maven.apache.org/skins/index.html
+* https://maven.apache.org/skins/maven-fluido-skin/
+
+### Site descriptor
+
+Providing a site descriptor allows you to customize the rendering of the website. With it you can specify a title, customize the side bar to add links to your own pages, change the skin, etc. The site descriptor should be created in `src/site` and should be named site.xml:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -308,13 +340,17 @@ Regarding the strings `Last Published: $dateValue` (top-left) and `Copyright © 
          xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 https://maven.apache.org/xsd/decoration-1.8.0.xsd"
          name="Maven Basics">
 
-    <!-- necessary in order for the side bar menu to be generated -->
     <body>
-        <menu ref="parent"/>
-        <menu ref="modules"/>
+        <menu name="Overview">
+            <!-- see https://maven.apache.org/plugins/maven-site-plugin/examples/creating-content.html -->
+            <item name="Architecture" href="arch.html"/>
+        </menu>
+
+        <!-- generates menu items for each rendered reports -->
         <menu ref="reports"/>
     </body>
 
+    <!-- if you create a site.xml, the skin must be explicitly specified -->
     <skin>
         <groupId>org.apache.maven.skins</groupId>
         <artifactId>maven-fluido-skin</artifactId>
@@ -328,77 +364,53 @@ For more information on the site descriptor file, see:
 * https://maven.apache.org/plugins/maven-site-plugin/examples/sitedescriptor.html
 * https://maven.apache.org/doxia/doxia-sitetools/doxia-decoration-model/decoration.html
 
-For more information on the architecture of the maven-site-plugin, see:
+### Additional reports
 
-* https://maven.apache.org/plugins/maven-site-plugin/history.html
-
-For more information on available skins, see:
-
-* https://maven.apache.org/skins/index.html
-
-We can add an additional report in order to automatically generate Javadoc pages for the application code. For his, maven-javadoc-plugin should be added to the reporting section:
+Depending on the features of the application, many different reports can be generated, e.g. test coverage reports, Javadoc, integration tests reports, code style reports. As our application is very simple, let's add only two more: Javadoc and buildplan. To add these reports, the corresponding plugin should be added to the `reporting` section of the pom.xml:
 
 ```xml
+<build>
+    <pluginManagement>
+        <plugins>
+            …
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildplan-maven-plugin</artifactId>
+                <version>2.2.0</version>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+</build>
+
 <reporting>
     <plugins>
-        …
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.4.1</version>
+        </plugin>
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildplan-maven-plugin</artifactId>
         </plugin>
     </plugins>
 </reporting>
 ```
 
-Another report can be added to the `reporting` section:
+Documentation:
 
-```xml
-<plugin>
-    <groupId>org.codehaus.mojo</groupId>
-    <artifactId>buildplan-maven-plugin</artifactId>
-    <version>2.2.0</version>
-</plugin>
-```
+* https://maven.apache.org/plugins/maven-javadoc-plugin/javadoc-mojo.html
+* https://www.mojohaus.org/buildplan-maven-plugin/list-mojo.html
 
-```sh
-mvn buildplan:list-phase -Dbuildplan.showLifecycles
-mvn buildplan:list
-mvn buildplan:list -DshowLifecycles
-mvn buildplan:list -Dbuildplan.showLifecycles
-mvn buildplan:list -Dbuildplan.showLifecycles -Pfast
-mvn buildplan:list-phase
-```
+### Recap
 
-As well as:
+The maven-site-plugin allows for the generation of a website for the including project. This website can contain resources created by the developers of the application, or reports generated by plugins.
 
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-dependency-plugin</artifactId>
-    <version>3.4.0</version>
-</plugin>
-```
+By default, maven-site-plugin uses the report goals of the maven-project-info-reports-plugin to generate reports pertaining to the project's metadata (contributors, SCM, licenses, dependencies, etc.).
 
-
-
-
-
-* maven-site-plugin, https://github.com/apache/maven-site-plugin
-  * arch: https://maven.apache.org/plugins/maven-site-plugin/history.html
-  * maven-project-info-reports-plugin, https://github.com/apache/maven-project-info-reports-plugin
-    * goal doc: https://maven.apache.org/plugins/maven-project-info-reports-plugin/plugin-info.html
-  * velocity template
-    * https://velocity.apache.org/
-  * doxia
-    * https://github.com/apache/maven-doxia-sitetools
-    * https://maven.apache.org/doxia/doxia/
-    * https://maven.apache.org/doxia/doxia-sitetools/doxia-site-renderer/index.html
-  * skins
-    * maven-default-skin, https://github.com/apache/maven-default-skin
-      * https://issues.apache.org/jira/browse/MSKINS-196
-    * maven-fluido-skin, https://github.com/apache/maven-fluido-skin
-  * other reports
-    * javadoc
-    * examples of reports: https://maven.apache.org/plugins/maven-project-info-reports-plugin/project-reports.html
+Each page of the website is generated by the maven-doxia-sitetools project, which uses the [Velocity](https://velocity.apache.org/) template engine (*.vm files). These template file can also be used when creating your own content or by website skins.
 

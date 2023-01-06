@@ -8,7 +8,7 @@
     <artifactId>maven-basics</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <description>A simple app to play with Maven features.</description>
+    <description>A simple application to play with Maven features.</description>
     <url>https://git.sr.ht/~nyg/maven-basics</url>
 
     <scm>
@@ -29,6 +29,7 @@
     <licenses>
         <license>
             <name>MIT</name>
+            <distribution>manual</distribution>
         </license>
     </licenses>
 
@@ -44,11 +45,10 @@
         <!-- Plugins -->
         <compiler.plugin.version>3.10.1</compiler.plugin.version>
         <jar.plugin.version>3.3.0</jar.plugin.version>
-        <site.plugin.version>4.0.0-M3</site.plugin.version>
+        <site.plugin.version>4.0.0-M4</site.plugin.version>
         <reports.plugin.version>3.4.1</reports.plugin.version>
         <javadoc.plugin.version>3.4.1</javadoc.plugin.version>
         <buildplan.plugin.version>2.2.0</buildplan.plugin.version>
-        <dependency.plugin.version>3.4.0</dependency.plugin.version>
     </properties>
 
     <build>
@@ -96,11 +96,6 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>buildplan-maven-plugin</artifactId>
                     <version>${buildplan.plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>${dependency.plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -163,10 +158,9 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildplan-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                    <showLifecycles>true</showLifecycles>
+                </configuration>
             </plugin>
         </plugins>
     </reporting>
