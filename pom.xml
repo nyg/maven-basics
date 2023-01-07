@@ -48,7 +48,7 @@
         <site.plugin.version>4.0.0-M4</site.plugin.version>
         <reports.plugin.version>3.4.1</reports.plugin.version>
         <javadoc.plugin.version>3.4.1</javadoc.plugin.version>
-        <buildplan.plugin.version>2.2.0</buildplan.plugin.version>
+        <buildplan.plugin.version>2.2.1</buildplan.plugin.version>
     </properties>
 
     <build>
