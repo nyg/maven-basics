@@ -9,12 +9,12 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <description>A simple application to play with Maven features.</description>
-    <url>https://git.sr.ht/~nyg/maven-basics</url>
+    <url>https://github.com/nyg/maven-basics</url>
 
     <scm>
-        <url>https://git.sr.ht/~nyg/maven-basics/tree</url>
-        <connection>scm:git:https://git.sr.ht/~nyg/maven-basics</connection>
-        <developerConnection>scm:git:git@git.sr.ht:~nyg/maven-basics</developerConnection>
+        <url>https://github.com/nyg/maven-basics</url>
+        <connection>scm:git:https://github.com/nyg/maven-basics.git</connection>
+        <developerConnection>scm:git:git@github.com:nyg/maven-basics.git</developerConnection>
     </scm>
 
     <contributors>
